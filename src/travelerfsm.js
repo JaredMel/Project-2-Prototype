@@ -1,5 +1,5 @@
 // this is the fsm and i just used the dialogue i created for now
-import { Contraband, AllowedItems, Dialogue } from "./Dialogue.js";
+import { Contraband, AllowedItems, Dialogue } from "./dialogue.js";
 
 //obv create the states
 export const States = {
@@ -78,7 +78,7 @@ export function createtraveler() {
 
     ask(questionId) {
       //diaglogue for state
-      const script = Dialogue[this.state];
+      const script = Dialogue[this.state.toUpperCase()];
       const possibleLines = script[questionId];
  // pick random stuff to say
 
