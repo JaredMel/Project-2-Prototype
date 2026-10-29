@@ -2,7 +2,7 @@
 // Authors: Jared Melendez, Max Brockmann, Ava Johnson, Niko Distefano
 // Citations: 
 //
-"use strict"
+import SampleScene from './scenes/SampleScene.js'
 
 let config = {
     parent: 'phaser-game',
@@ -10,10 +10,10 @@ let config = {
     width: 900,
     height: 600,
     backgroundColor: '#ffffff',
+    scene: [ SampleScene ],
     scale: {
         mode: Phaser.Scale.FIT,
         autoCenter: Phaser.Scale.CENTER_BOTH
     },
-    scene: [ SampleScene ]
 }
 let game = new Phaser.Game(config)

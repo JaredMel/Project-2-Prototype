@@ -1,8 +1,21 @@
-class SampleScene extends Phaser.Scene {
+import { createtraveler } from '../travelerfsm.js'
+import { Contraband } from '../dialogue.js'
+
+const PEOPLE = ['bemused', 'happy', 'nuteral', 'stressed']
+ 
+// from dialogue 
+const QUESTIONS = [
+    { id: 'origin',      label: '> Where are you coming from?' },
+    { id: 'purpose',     label: '> Why were you there?' },
+    { id: 'bagContents', label: "> What's in your bag?" },
+    { id: 'declare',     label: '> Anything to declare?' },
+]
+ 
+export default class SampleScene extends Phaser.Scene {
     constructor() {
         super('sampleScene')
     }
-
+ 
     preload() {
         // Load assets
         this.load.path = './assets/'
@@ -13,85 +26,113 @@ class SampleScene extends Phaser.Scene {
         this.load.image('nuteral', 'nuteral.png')
         this.load.image('stressed', 'stressed.png')
     }
-
-    intit() {
-        this.score
-    }
-
-    create() {
-        // Add Textboxes & Buttons
-        this.personDialogue = this.add.text(game.config.width/1.25, game.config.height/4, 'Bla Bla Bla').setFontSize(20).setColor('Black').setOrigin(0.5)
+ 
+    init() {
         this.score = 0
-        this.scoreText = this.add.text(game.config.width/6, game.config.height/6, 'Score: ' + this.score).setFontSize(40).setColor('Black').setOrigin(0.5)
+        this.traveler = null
+        this.decisionMade = false
+    }
+ 
+    create() {
+        const { width, height } = this.scale
         
         // Add images
-        const people = ['bemused', 'happy', 'nuteral', 'stressed']
         let ran = Phaser.Math.Between(0, 3)
-        let person = this.add.image(100, 0, people[ran]).setOrigin(0).setScale(0.5)
-
+        this.person = this.add.image(100, 0, PEOPLE[ran]).setOrigin(0).setScale(0.5)
         this.add.image(0, -200, 'desk').setOrigin(0)
-
-        // Create when button
-        let whenButton = this.add.text(game.config.width/1.25, game.config.height/1.75, '> When is it?', { fill: 'rgb(0, 0, 0)'}).setFontSize(20).setOrigin(0.5)
-        whenButton.setInteractive().on('pointerdown', () => this.whenQuestion())
-
-        // Create what button
-        let whatButton = this.add.text(game.config.width/4, game.config.height/1.75, '> What do you have in your suitcase?', { fill: 'rgb(0, 0, 0)'}).setFontSize(20).setOrigin(0.5)
-        whatButton.setInteractive().on('pointerdown', () => this.whatQuestion())
+ 
+        // Add Text
+        this.personDialogue = this.add.text(width / 1.25, height / 4, '', { align: 'center', wordWrap: { width: 280 } })
+            .setFontSize(20).setColor('Black').setOrigin(0.5)
+        this.scoreText = this.add.text(width / 6, height / 6, '')
+            .setFontSize(40).setColor('Black').setOrigin(0.5)
+ 
+        this.createQuestionButtons(width, height)
 
         // Create suitcase card
-        let suitcaseCard = this.add.image(game.config.width/2, game.config.height/2, 'suitcase_card').setOrigin(0.5)
-        let nextPersonButton = this.add.text(game.config.width/2, game.config.height/1.5, 'Next Person', { fill: 'rgb(0, 0, 0)'}).setFontSize(20).setOrigin(0.5)
-        let suitcaseText = this.add.text(game.config.width/2, game.config.height/4, '- Banana').setFontSize(20).setColor('Black').setOrigin(0.5)
-        nextPersonButton.setInteractive().on('pointerdown', () => this.nextPerson(ran, person, people, suitcaseCard, nextPersonButton, suitcaseText))
-        suitcaseCard.setAlpha(0)
-        nextPersonButton.setAlpha(0)
-        suitcaseText.setAlpha(0)
+        const card = this.add.image(width / 2, height / 2, 'suitcase_card').setOrigin(0.5)
+        this.suitcaseText = this.add.text(width / 2, height / 3.5, '', { align: 'left' })
+            .setFontSize(20).setColor('Black').setOrigin(0.5, 0)
+        this.resultText = this.add.text(width / 2, height / 1.7, '', { align: 'center', wordWrap: { width: 300 } })
+            .setFontSize(20).setColor('Black').setOrigin(0.5)
+        const nextButton = this.makeButton(width / 2, height / 1.5, 'Next Person', () => this.nextPerson())
+        this.suitcaseCard = this.add.container(0, 0, [card, this.suitcaseText, this.resultText, nextButton])
+            .setDepth(1)
+            .setVisible(false)
 
         //Create check suitcase button
-        let checkSuitcaseButton = this.add.text(game.config.width/4, game.config.height/1.25, 'Check Suitcase', { fill: 'rgb(0, 0, 0)'}).setFontSize(20).setOrigin(0.5)
-        checkSuitcaseButton.setInteractive().on('pointerdown', () => this.checkSuitcase(suitcaseCard, nextPersonButton, suitcaseText))
-
+        this.checkSuitcaseButton = this.makeButton(width / 4, height / 1.25, 'Check Suitcase', () => this.checkSuitcase(true))
+        
         //Create let pass button
-        let letPassButton = this.add.text(game.config.width/1.25, game.config.height/1.25, 'Let Pass', { fill: 'rgb(0, 0, 0)'}).setFontSize(20).setOrigin(0.5)
-        letPassButton.setInteractive().on('pointerdown', () => this.letPass(suitcaseCard, nextPersonButton, suitcaseText))
-
-        // Move suitcase card to the front
-        suitcaseCard.setDepth(1)
-        nextPersonButton.setDepth(2)
-        suitcaseText.setDepth(2)
+        this.letPassButton = this.makeButton(width / 1.25, height / 1.25, 'Let Pass', () => this.checkSuitcase(false))
+ 
+        this.updateScore(0)
+        this.nextPerson()
+    }
+    
+    // changed to make a standard button
+    makeButton(x, y, label, onClick) {
+        const button = this.add.text(x, y, label, { fill: 'rgb(0, 0, 0)' })
+            .setFontSize(20)
+            .setOrigin(0.5)
+            .setInteractive({ useHandCursor: true })
+        button.on('pointerover', () => button.setColor('#666666')) // when not hovering
+        button.on('pointerout', () => button.setColor('#000000')) // when hovering
+        button.on('pointerdown', onClick)
+        return button
+    }
+ 
+    createQuestionButtons(width, height) {
+        // this is so I can make a grid in the desk erea
+        const X = [width / 4, width / 1.25]
+        const Y = [height / 1.75, height / 1.75 + 40]
+ 
+        this.questionButtons = QUESTIONS.map((q, i) =>
+            this.makeButton(X[i % 2], Y[Math.floor(i / 2)], q.label, () => this.askQuestion(q.id))
+        )
+    }
+ 
+    askQuestion(questionId) {
+        if (this.decisionMade) return
+        this.personDialogue.setText(this.traveler.ask(questionId))
+    }
+ 
+    checkSuitcase(playerSaysGuilty) {
+        if (this.decisionMade) return 
+        this.decisionMade = true
+ 
+        const correct = this.traveler.isCorrectCall(playerSaysGuilty)
+        this.updateScore(correct ? 1 : -1)
+        this.showSuitcase(correct)
+    }
+ 
+    showSuitcase(correct) {
+        const items = this.traveler.suitcase
+        this.suitcaseText.setText(items.map(item => '- ' + item).join('\n'))
+ 
+        const contraband = items.find(item => Contraband.includes(item))
+        let message
+        if (correct) {
+            message = contraband ? `Nice catch! ${contraband}.` : 'All clear. Good call!'
+        } else {
+            message = contraband ? `Oops! you let a ${contraband} through!` : 'Nothing but allowed items. Wrongly detained!'
+        }
+        this.resultText.setText(message)
+ 
+        this.suitcaseCard.setVisible(true)
     }
 
-    whenQuestion() {
-        this.personDialogue.setText('Yada Yada Yada')
+      nextPerson() {
+        this.traveler = createtraveler()
+        this.decisionMade = false
+ 
+        this.person.setTexture(Phaser.Utils.Array.GetRandom(PEOPLE))
+        this.personDialogue.setText('Next!')
+        this.suitcaseCard.setVisible(false)
     }
 
-    whatQuestion(personDial) {
-        this.personDialogue.setText('Something Something')
-    }
-
-    checkSuitcase(suitCard, nextButton, suitText) {
-        suitCard.setAlpha(1)
-        nextButton.setAlpha(1)
-        suitText.setAlpha(1)
-        this.score++
+    updateScore(delta) {
+        this.score += delta
         this.scoreText.setText('Score: ' + this.score)
-    }
-
-    letPass(suitCard, nextButton, suitText) {
-        suitCard.setAlpha(1)
-        nextButton.setAlpha(1)
-        suitText.setAlpha(1)
-        this.score++
-        this.scoreText.setText('Score: ' + this.score)
-    }
-
-    nextPerson(ranIndex, person, people, suitCard, nextButton, suitText) {
-        ranIndex = Phaser.Math.Between(0, 3)
-        person.setTexture(people[ranIndex])
-        suitCard.setAlpha(0)
-        nextButton.setAlpha(0)
-        suitText.setAlpha(0)
-        this.personDialogue.setText('Bla Bla Bla')
     }
 }
