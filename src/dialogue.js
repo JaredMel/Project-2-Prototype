@@ -6,28 +6,28 @@ export const AllowedItems = [
   "toothbrush",
   "paperback book",
   "phone charger",
-  "sunglasses"];
+  "sunglasses"
+];
 
 export const Contraband = [
   "illegal fish",
   "illegal substance",
-  "nuke",
-  "suspicious yo-yo"];
+  "bomb",
+  "suspicious yo-yo"
+];
 
 export const Dialogue = {
 
   INNOCENT: {
 
     // "Where are you coming from?"
-
     origin: [
-      "I was visiting family in Conneticut.",
+      "I was visiting family in Connecticut.",
       "Coming back from a fish conference.",
-      "Hawaii, I wish I could go back."
+      "Hawaii! I wish I could go back."
     ],
 
     // "Why were you there?"
-
     purpose: [
       "I was just hanging out with some family.",
       "Fish. Super lame, I promise.",
@@ -35,35 +35,34 @@ export const Dialogue = {
     ],
 
     // "What's in your bag?"
-
     bagContents: [
       "Literally just {item}, and some clothes.",
-      "Clothes, {item}, some chocolate *wink* i actually ate it all..",
-      "Oh I have {item}.. feel free to look."
+      "Clothes, {item}, some chocolate... wait, no, I ate the chocolate.",
+      "Oh, I have {item}... feel free to look."
     ],
 
     // "Anything to declare?"
     declare: [
       "Nada.",
       "I dunno. Nah. Do I have to declare chocolate?",
-      "You can look if you want, curious george"
-    ],
+      "You can look if you want, Curious George."
+    ]
   },
 
   GUILTY: {
 
     // "Where are you coming from?"
     origin: [
-      "Airport",
+      "Airport.",
       "Does it matter?",
-      "Aquarium. OH.. I mean. Hawaii."
+      "Aquarium. OH... I mean. Hawaii."
     ],
 
     // "What's the purpose of your trip?"
     purpose: [
       "Seeing my step dad.",
       "Thats rude to ask. Funeral.",
-      "I.. definitely not like.. dude I just can't tell you I'm uncomfortable."
+      "I... definitely not like... dude I just can't tell you I'm uncomfortable."
     ],
 
     // "Whats in your bag?"
@@ -77,5 +76,7 @@ export const Dialogue = {
     declare: [
       "NO?",
       "Huh?",
-      "Heh.. uh. Nothing, officer nosey!"
-    ],},};
+      "Heh... uh. Nothing, officer nosey!"
+    ]
+  }
+};
