@@ -61,7 +61,7 @@ export default class SampleScene extends Phaser.Scene {
             .setVisible(false)
 
         //Create check suitcase button
-        this.checkSuitcaseButton = this.makeButton(width / 4, height / 1.25, 'Check Suitcase', () => this.checkSuitcase(true))
+        this.checkSuitcaseButton = this.makeButton(width / 4, height / 1.25, 'Detain', () => this.checkSuitcase(true))
         
         //Create let pass button
         this.letPassButton = this.makeButton(width / 1.25, height / 1.25, 'Let Pass', () => this.checkSuitcase(false))
